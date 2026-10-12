@@ -391,7 +391,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 				
 						<td>
 							<div class="detailsFlexBox">
-								<div class="cellStyle3">Max Zellenspannung:</div>
+								<div class="cellStyle3">Max Zellenspannung: <span>C<span id="CELLMAX"></span></span></div>
 								<div> <span><span id="MAXCELLVOLTAGE"></span> mV</span></div>
 							</div>
 						</td>
@@ -407,7 +407,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 				
 						<td>
 							<div class="detailsFlexBox">
-								<div class="cellStyle3">Min Zellenspannung:</div>
+								<div class="cellStyle3">Min Zellenspannung: <span>C<span id="CELLMIN"></span></span></div>
 								<div> <span><span id="MINCELLVOLTAGE"></span> mV</span></div>
 							</div>
 						</td>
@@ -427,24 +427,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 								<div> <span><span id="CELLDELTA"></span> mV</span></div>
 							</div>
 						</td>
-					</tr>
-			  
-					<tr>
-						<td>
-							<div class="detailsFlexBox">
-								<div class="cellStyle1">ZellenNr. min:</div>
-								<div> <span>C<span id="CELLMIN"></span></span></div>
-							</div>
-						</td>
-				
-						<td>
-							<div class="detailsFlexBox">
-								<div class="cellStyle3">ZellenNr. max:</div>
-								<div> <span>C<span id="CELLMAX"></span></span></div>
-							</div>
-						</td>	
-					</tr>
-						  
+					</tr>						  
 				</table>
 
 					  
