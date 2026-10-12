@@ -20,9 +20,25 @@
 ****************************************************************************/
 
 #include <Arduino.h>
+#include "FS.h"
+#include <LittleFS.h>
+
+#include <esp_wifi.h>
 #include <WiFi.h>
+#include <WiFiClient.h>
+#include <WiFiManager.h>
+#include <ESPmDNS.h>
+#include <HTTPClient.h>
 #include <PubSubClient.h>
+#include <ESPAsyncWebServer.h>
+#include <ElegantOTA.h>      
+#include <ArduinoJson.h>
+
 #include <Adafruit_NeoPixel.h>
+#include "nvs_flash.h" // nvs_flash_init(), ...
+#include "html.h"
+
+
 
 #define RGB_LED_PIN 48
 #define RGB_LED_COUNT  1
@@ -32,13 +48,16 @@ Adafruit_NeoPixel rgbled(RGB_LED_COUNT, RGB_LED_PIN, NEO_GRB + NEO_KHZ800);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+AsyncWebServer server(80);
+AsyncEventSource events("/events");
+
 // wlan
-const char *ssid = "Hier deine SSID";
-const char *password = "Hier dein Wlanpasswort";
+const char *ssid = "LELAN24";
+const char *password = "(ml141004603)";
 
 // mqtt
-const char* mqtt_server = "192.168.178.10";
-const int mqtt_port = 1889;
+char mqtt_server[16] = "192.168.178.10";
+char mqtt_port[5] = "1889";
 
 const char* topic_root = "wattcycle/battery";
 char buffer_topic[128];
@@ -75,6 +94,8 @@ char *REQUEST = "~20024642E00202FD33\r";
   #define DBG_PRINTLN(x)
 #endif
 
+#define FORMAT_LITTLEFS_IF_FAILED true
+
 char dbgbuffer[128]; 
 //**********************************************************************************************************
 // Serial.printf workaround:
@@ -86,6 +107,206 @@ char dbgbuffer[128];
 
 // timer
 unsigned long startTime = millis();
+
+bool new_connect = true;
+
+const char* PARAM_MESSAGE = "message";
+
+bool checkbox_mqttenabled = true;
+char mqtt_state[20] = "disabled";
+unsigned long ota_progress_millis = 0;
+unsigned char mac[8] = {'0','0','0','0','0','0','\0'};
+char clientId[16] = {'E','S','P','3','2','_','0','0','0','0','0','0','\0'};
+
+float  bat_voltages = 0.0;
+float  bat_current = 0.0;   
+uint16_t  bat_cycles = 0;
+uint16_t  bat_maxcellvoltage = 0;
+uint16_t  bat_mincellvoltage = 0;  
+uint16_t  bat_celldelta = 0;   
+uint16_t  bat_cellmax = 0;     
+uint16_t  bat_cellmin = 0; 
+uint16_t  bat_cellvoltages[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  
+
+
+long rssi;
+
+// Wifi to percent
+const int RSSI_MAX =-50;  // max strength signal in dBm
+const int RSSI_MIN =-100; // min strength signal in dBm
+
+//flag for saving data
+bool shouldSaveConfig = false;
+
+void saveConfigCallback () {
+  DBG_PRINTLN("Should save config");
+  shouldSaveConfig = true;
+}
+
+void notFound(AsyncWebServerRequest *request) {
+    request->send(404, "text/plain", "Not found");
+}
+
+String processor(const String& var){ 
+  return String();
+}
+
+int dBmtoPercent(int dBm){
+  int percent;
+  if(dBm <= RSSI_MIN){
+    percent = 0;
+  } else if(dBm >= RSSI_MAX) {  
+    percent = 100;
+  } else {
+    percent = 2 * (dBm + 100);
+  }
+
+  return percent;
+} 
+
+void onOTAStart() {
+  // Log when OTA has started
+  Serial.println("OTA update started!");
+  // <Add your own code here>
+}
+
+void onOTAProgress(size_t current, size_t final) {
+  // Log every 1 second
+  if (millis() - ota_progress_millis > 1000) {
+    ota_progress_millis = millis();
+    Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
+  }
+}
+
+void onOTAEnd(bool success) {
+  // Log when OTA has finished
+  if (success) {
+    Serial.println("OTA update finished successfully!");
+  } else {
+    Serial.println("There was an error during OTA update!");
+  }
+  // <Add your own code here>
+}
+
+//read configuration from config.json
+void readConfig(){
+  DBG_PRINTLN(F("mounting FS..."));
+
+  if (LittleFS.begin()) {
+    DBG_PRINTLN(F("mounted file system"));
+
+    if (LittleFS.exists("/config.json")) {
+      //file exists, reading and loading
+      DBG_PRINTLN("open config file");
+      File configFile = LittleFS.open("/config.json", "r");
+      if (configFile) {
+        DBG_PRINTLN("read config file");
+        size_t size = configFile.size();
+
+        // Allocate a buffer to store contents of the file.
+        std::unique_ptr<char[]> buf(new char[size]);
+
+        configFile.readBytes(buf.get(), size);
+
+        JsonDocument jdoc;
+        DeserializationError error = deserializeJson(jdoc, buf.get());
+
+        serializeJson(jdoc, Serial);
+        DBG_PRINTLN();
+
+        configFile.close();
+
+        if (!error) {
+
+          strcpy(mqtt_server, jdoc["mqtt_server"]);
+          strcpy(mqtt_port, jdoc["mqtt_port"]);
+
+          char key_value[2];
+
+          if(jdoc.containsKey("mqtt_on")){
+            strcpy(key_value, jdoc["mqtt_on"]);
+            if(strcmp(key_value, "1") == 0){
+              checkbox_mqttenabled = true;
+            }else{
+              checkbox_mqttenabled = false;
+            }
+          }
+
+          
+        } else {
+          DBG_PRINTLN(F("failed to load json config"));
+        }
+      }
+    }
+  } else {
+    DBG_PRINTLN(F("failed to mount FS"));
+  }
+  //end read config data
+}
+
+
+// save data to config.json
+void saveConfig(){
+  DBG_PRINTLN(F("save data to config.json"));
+  JsonDocument jdoc;
+ 
+  jdoc["mqtt_server"] = mqtt_server;
+  jdoc["mqtt_port"] = mqtt_port;
+
+  if(checkbox_mqttenabled){
+    jdoc["mqtt_on"] = "1";
+  }else{
+    jdoc["mqtt_on"] = "0";
+  }
+
+  File configFile = LittleFS.open("/config.json", "w");
+  if (!configFile) {
+    DBG_PRINTLN(F("failed to open config file for writing"));
+    return;
+  }
+
+
+  if(serializeJson(jdoc, configFile) == 0) {
+    DBG_PRINTLN(F("Failed to write to file"));
+  }else{
+    serializeJson(jdoc, Serial); // print to serial console
+  DBG_PRINTLN();
+  }; 
+
+  configFile.close();
+}
+
+
+void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
+    Serial.printf("Listing directory: %s\r\n", dirname);
+
+    File root = fs.open(dirname);
+    if(!root){
+        Serial.println("- failed to open directory");
+        return;
+    }
+    if(!root.isDirectory()){
+        Serial.println(" - not a directory");
+        return;
+    }
+
+    File file = root.openNextFile();
+    while(file){
+        if(file.isDirectory()){
+            Serial.print("  DIR : ");
+            Serial.println(file.name());
+            if(levels){
+                listDir(fs, file.path(), levels -1);
+            }
+        } else {
+            Serial.print("  FILE: ");
+            Serial.print(file.name());
+            Serial.print("\tSIZE: ");
+            Serial.println(file.size());
+        }
+        file = root.openNextFile();
+    }
+}
 
 // wlan status
 const char *str_status[]= {
@@ -250,9 +471,11 @@ void parsePylontechFrame(const char* frame) {
     DBG_PRINT(dbgbuffer);
     
     //send mqtt data
-    sprintf(buffer_topic,"%s%s_%02d", topic_root, "/Einzelzellen/Zelle", i+1);
+    sprintf(buffer_topic,"%s%s_%02d", topic_root, "/voltages/cell", i+1);
     sprintf(buffer_payload,"%d", cellMv);
     client.publish(buffer_topic, buffer_payload);
+
+    bat_cellvoltages[i] = cellMv;
 
     // Minimale Zellenspannung + Zelle ermitteln
     if (cellMv < minCellmV) {
@@ -290,22 +513,27 @@ void parsePylontechFrame(const char* frame) {
   sprintf(buffer_topic,"%s%s", topic_root, "/min_cell_voltage");
   sprintf(buffer_payload,"%d", minCellmV);
   client.publish(buffer_topic, buffer_payload);
+  bat_mincellvoltage = minCellmV;  
 
   sprintf(buffer_topic,"%s%s", topic_root, "/cell_with_min_voltage");
   sprintf(buffer_payload,"C%d", minCellNum);
   client.publish(buffer_topic, buffer_payload);
+  bat_cellmin = minCellNum;
 
   sprintf(buffer_topic,"%s%s", topic_root, "/max_cell_voltage");
   sprintf(buffer_payload,"%d", maxCellmV);
   client.publish(buffer_topic, buffer_payload);
+  bat_maxcellvoltage =  maxCellmV;
 
   sprintf(buffer_topic,"%s%s", topic_root, "/cell_with_max_voltage");
   sprintf(buffer_payload,"C%d", maxCellNum);
   client.publish(buffer_topic, buffer_payload);
+  bat_cellmax =  maxCellNum;
 
   sprintf(buffer_topic,"%s%s", topic_root, "/cell_difference");
   sprintf(buffer_payload,"%d", deltaMv);
   client.publish(buffer_topic, buffer_payload);
+  bat_celldelta = deltaMv;
 
 
   // Temperaturen
@@ -322,7 +550,7 @@ void parsePylontechFrame(const char* frame) {
     DBG_PRINT(dbgbuffer);
     
     //send mqtt data
-    sprintf(buffer_topic,"%s%s_%02d", topic_root, "/Temperaturen/Sensor", i+1);
+    sprintf(buffer_topic,"%s%s_%02d", topic_root, "/temperatures/sensor", i+1);
     sprintf(buffer_payload,"%.1f", tempC);
     client.publish(buffer_topic, buffer_payload);
   }
@@ -336,6 +564,7 @@ void parsePylontechFrame(const char* frame) {
   sprintf(buffer_topic,"%s%s", topic_root, "/current");
   sprintf(buffer_payload,"%.1f", currentA);
   client.publish(buffer_topic, buffer_payload); 
+  bat_current = currentA;
 
   // Gesamtspannung
   uint16_t totalVoltageMv = parseHex(frame, index, 4);
@@ -345,6 +574,7 @@ void parsePylontechFrame(const char* frame) {
   sprintf(buffer_topic,"%s%s", topic_root, "/voltage");
   sprintf(buffer_payload,"%.1f", totalVoltageV);
   client.publish(buffer_topic, buffer_payload);
+  bat_voltages = totalVoltageV;
 
   // Verbleibende Kapazität
   uint16_t remainCapacityMha = parseHex(frame, index, 4);
@@ -360,6 +590,7 @@ void parsePylontechFrame(const char* frame) {
   sprintf(buffer_topic,"%s%s", topic_root, "/charge_cycles");
   sprintf(buffer_payload,"%d", cycles);
   client.publish(buffer_topic, buffer_payload);
+  bat_cycles = cycles;
 
   
   DBG_PRINTLN("\n--- Systemwerte ---");
@@ -387,16 +618,24 @@ void parsePylontechFrame(const char* frame) {
 
 //mqtt reconnent
 void reconnect() {
+  DBG_PRINTLN("reconnect MQTT connection!");
+
+  client.setServer(mqtt_server, atoi(mqtt_port));
+
+  sprintf(dbgbuffer,"reconnect: mqtt_server: %s\n", mqtt_server);
+  DBG_PRINT(dbgbuffer);
+  sprintf(dbgbuffer,"reconnect: mqtt_port: %d\n", atoi(mqtt_port));
+  DBG_PRINT(dbgbuffer);
+
   while (!client.connected()) {
     DBG_PRINTLN("Versuche MQTT-Verbindung...");
-    // Einzigartige Client-ID erzeugen
-    String clientId = "ESP32S3Client-";
-    clientId += String(random(0xffff), HEX);
-    
-    if (client.connect(clientId.c_str())) {
+        
+    if (client.connect(clientId)) {
       DBG_PRINTLN("verbunden!");
       client.publish("esp32s3/status", "online");
+      strcpy(mqtt_state, "Verbunden");
     } else {
+      strcpy(mqtt_state, "Fehler!");
       DBG_PRINT("Fehlgeschlagen, RC=");
       DBG_PRINT(client.state());
       DBG_PRINTLN(" - Nächster Versuch in 5 Sekunden");
@@ -425,36 +664,233 @@ void setup() {
   pinMode(DE_RE_PIN, OUTPUT);
   digitalWrite(DE_RE_PIN, RS485_RECIVE); 
 
-  
-  DBG_PRINT("Chip ID: 0x");
-  DBG_PRINTLN(ESP.getChipModel());
+  DBG_PRINTLN("DBG 1");
 
-  DBG_PRINTLN( "Connect to Router requested" );
+  //WiFi.mode(WIFI_STA);
+  //WiFi.macAddress(mac);
+  //WiFi.persistent(true);
 
-  connectWifi();
-  if (WiFi.status() == WL_CONNECTED) {
-    DBG_PRINT("WiFi mode: ");
-    DBG_PRINTLN(str_mode[WiFi.getMode()]);
-    DBG_PRINT( "Status: " );
-    DBG_PRINTLN(str_status[WiFi.status()]);
-    // signal WiFi connect
-    rgbled.setPixelColor(0, rgbled.Color(0, 255, 0)); // Green
-    rgbled.show();
-    delay(500); // ms
-    rgbled.setPixelColor(0, rgbled.Color(0, 0, 0)); // off
-    rgbled.show();      
-  } else {
-    DBG_PRINTLN("");
-    DBG_PRINTLN("WiFi connect failed, push RESET button.");
-    signalError();
+  if(!LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED)) { 
+     DBG_PRINT("LittleFS mount failed, ");
+     DBG_PRINTLN(" Create Filesystem");
+     return;
   }
 
-  client.setServer(mqtt_server, mqtt_port); 
+  listDir(LittleFS, "/", 0);
+
+  if (!LittleFS.exists("/config.json")) { 
+    saveConfig();
+  }
+
+  readConfig(); //read config.json
+
+ 
+  WiFiManagerParameter custom_mqtt_server("server", "mqtt server", mqtt_server, 40);
+  WiFiManagerParameter custom_mqtt_port("port", "mqtt port", mqtt_port, 6); 
+ 
+
+  WiFiManager wifiManager;
+  
+  wifiManager.setDebugOutput(true);
+  //wifiManager.resetSettings();
+ 
+  wifiManager.setClass("invert"); // dark theme
+  wifiManager.setSaveConfigCallback(saveConfigCallback);
+  wifiManager.setConnectTimeout(20);
+  wifiManager.setConfigPortalTimeout(120);
+  wifiManager.addParameter(&custom_mqtt_server);
+  wifiManager.addParameter(&custom_mqtt_port);
+ 
+  // create menu with only two entries
+  std::vector<const char *> wm_menu  = {"wifi", "exit"};
+  wifiManager.setShowInfoUpdate(false);
+  wifiManager.setShowInfoErase(false);
+  wifiManager.setMenu(wm_menu);
+  
+  // start WifiManager
+  bool res = wifiManager.autoConnect(clientId);
+  
+  if(!res) {
+    DBG_PRINTLN("Failed to connect");
+    ESP.restart();
+  } else {
+    DBG_PRINT("WiFi connected to ");
+    DBG_PRINTLN(String(WiFi.SSID()));
+    DBG_PRINT("RSSI = ");
+    DBG_PRINT(String(WiFi.RSSI()));
+    DBG_PRINTLN(" dBm");
+    DBG_PRINT("IP address  ");
+    DBG_PRINTLN(WiFi.localIP());
+    DBG_PRINTLN();
+
+    //read updated parameters
+    strcpy(mqtt_server, custom_mqtt_server.getValue());
+    strcpy(mqtt_port, custom_mqtt_port.getValue());
+    
+    //save the custom parameters to FS
+    if (shouldSaveConfig) {
+      saveConfig();
+    }
+
+    if(checkbox_mqttenabled){
+      DBG_PRINTLN("set mqtt server!");
+      DBG_PRINTLN(String("mqtt_server: ") + mqtt_server);
+      DBG_PRINTLN(String("mqtt_port: ") + mqtt_port);
+
+      client.setServer(mqtt_server, atoi(mqtt_port));
+      //client.setCallback(mqtt_callback);
+    }
+  }
+
+  WiFi.mode(WIFI_STA);
+  WiFi.macAddress(mac);
+  WiFi.persistent(true);
+
+  sprintf(clientId, "ESP32_%02x%02x%02x", mac[3], mac[4], mac[5] );
+ 
+
+  // Handle Web Server Events
+  events.onConnect([](AsyncEventSourceClient *client){
+    if(client->lastId()){
+      DBG_PRINTLN("");
+      //DEBUG_SERIAL.printf("Client reconnected! Last message ID that it got is: %u\n", client->lastId());
+      sprintf(dbgbuffer,"Client reconnected! Last message ID that it got is: %u\n", client->lastId());
+      DBG_PRINTLN(dbgbuffer);
+    }
+    client->send("hello!", NULL, millis(), 10000);
+  });
+
+  // Handle Web Server
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    new_connect = true;
+    request->send_P(200, "text/html", index_html, processor);
+  });  
+
+   // crate json and fetch data
+  server.on("/json", HTTP_GET, [] (AsyncWebServerRequest *request){
+    JsonDocument jdoc;
+    String message = "";
+
+    rssi = WiFi.RSSI();
+    
+    jdoc["WIFIRSSI"]      = rssi;
+    jdoc["WIFIQUALITI"]   = dBmtoPercent(rssi);
+    jdoc["CLIENTID"]      = clientId;
+    jdoc["MQTTSERVER"]    = mqtt_server;
+    jdoc["MQTTPORT"]      = mqtt_port;
+    jdoc["MQTTROOT1"]     = topic_root;
+    jdoc["CBMQTTSTATE"]   = checkbox_mqttenabled; //checkbox mqtt ein/aus
+
+    if(checkbox_mqttenabled){
+        jdoc["MQTTSTATE"] = "EIN";
+      }else{
+        jdoc["MQTTSTATE"] = "AUS";
+    }
+    
+    jdoc["MQTTSTATECL"]   = mqtt_state;
+    jdoc["VOLTAGES"]      = bat_voltages;
+	  jdoc["CURRENT"]       = bat_current;   
+	  jdoc["MAXCELLVOLTAGE"] = bat_maxcellvoltage;
+	  jdoc["MINCELLVOLTAGE"] = bat_mincellvoltage;  
+	  jdoc["CELLDELTA"]     = bat_celldelta;   
+	  jdoc["CELLMAX"]       = bat_cellmax;     
+	  jdoc["CELLMIN"]       = bat_cellmin;
+    jdoc["CYCLES"]        = bat_cycles;    
+	  jdoc["CELL01VOLTAGE"] = bat_cellvoltages[0];   
+	  jdoc["CELL02VOLTAGE"] = bat_cellvoltages[1];   
+	  jdoc["CELL03VOLTAGE"] = bat_cellvoltages[2];   
+	  jdoc["CELL04VOLTAGE"] = bat_cellvoltages[3];   
+	  jdoc["CELL05VOLTAGE"] = bat_cellvoltages[4];   
+	  jdoc["CELL06VOLTAGE"] = bat_cellvoltages[5];
+	  jdoc["CELL07VOLTAGE"] = bat_cellvoltages[6];   
+	  jdoc["CELL08VOLTAGE"] = bat_cellvoltages[7];   
+	  jdoc["CELL09VOLTAGE"] = bat_cellvoltages[8];  
+	  jdoc["CELL10VOLTAGE"] = bat_cellvoltages[9];   
+	  jdoc["CELL11VOLTAGE"] = bat_cellvoltages[10];  
+	  jdoc["CELL12VOLTAGE"] = bat_cellvoltages[11];  
+	  jdoc["CELL13VOLTAGE"] = bat_cellvoltages[12];  
+	  jdoc["CELL14VOLTAGE"] = bat_cellvoltages[13];  
+	  jdoc["CELL15VOLTAGE"] = bat_cellvoltages[14];   
+	  jdoc["CELL16VOLTAGE"] = bat_cellvoltages[15];
+
+    serializeJson(jdoc, message);
+
+    request->send(200, "application/json", message);
+    
+  });
+
+  server.on("/checkbox", HTTP_GET, [] (AsyncWebServerRequest *request) {
+      String checkbox_id;
+      String checkbox_value;
+     
+      if (request->hasParam("cbid") && request->hasParam("state")) {
+        checkbox_id = request->getParam("cbid")->value();
+        checkbox_value = request->getParam("state")->value();
+       
+        if(checkbox_id.equals("CBMQTTSTATE")){
+          if(checkbox_value.equals("1")){
+            checkbox_mqttenabled = true;
+          } else {
+            checkbox_mqttenabled = false;
+          }
+        }
+        
+      }    
+      request->send_P(200, "text/html", index_html, processor);
+    });
+
+ // start AP Mode
+  server.on("/apmode", HTTP_GET, [](AsyncWebServerRequest *request) {
+    WiFiManager wifiManager;
+    wifiManager.resetSettings();
+      
+    ESP.restart();
+    request->send_P(200, "text/html", index_html, processor);
+  });
+
+   // restart system
+  server.on("/restart", HTTP_GET, [](AsyncWebServerRequest *request) {   
+    DBG_PRINTLN("/restart");  
+    ESP.restart();
+    request->send_P(200, "text/html", index_html, processor);
+  });
+
+  // save settings
+  server.on("/savesettings", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    String value;
+
+    value =  request->getParam("mqttserver")->value();
+    memset(mqtt_server, 0, sizeof(mqtt_server)); 
+    strcat(mqtt_server, value.c_str());
+
+    value =  request->getParam("mqttport")->value();
+    memset(mqtt_port, 0, sizeof(mqtt_port)); 
+    strcat(mqtt_port, value.c_str());
+
+    saveConfig(); 
+
+    request->send_P(200, "text/html", index_html, processor);
+  });
+
+  //*****************************
+ 
+  ElegantOTA.begin(&server);
+  ElegantOTA.onStart(onOTAStart);
+  ElegantOTA.onProgress(onOTAProgress);
+  ElegantOTA.onEnd(onOTAEnd);
+    
+  server.onNotFound(notFound);
+  server.addHandler(&events);
+  server.begin();
+
+  rssi = WiFi.RSSI();
 
 } 
 
 
 void loop() {
+
+  ElegantOTA.loop();
   
   if (!client.connected()) {
     reconnect();
@@ -499,5 +935,4 @@ void loop() {
     }     
   }
   
- // loop ende  
-}
+}// loop ende 
