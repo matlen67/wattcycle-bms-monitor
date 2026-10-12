@@ -107,11 +107,8 @@ char dbgbuffer[128];
 
 // timer
 unsigned long startTime = millis();
-
 bool new_connect = true;
-
 const char* PARAM_MESSAGE = "message";
-
 bool checkbox_mqttenabled = true;
 char mqtt_state[20] = "disabled";
 unsigned long ota_progress_millis = 0;
@@ -128,28 +125,30 @@ uint16_t  bat_cellmax = 0;
 uint16_t  bat_cellmin = 0; 
 uint16_t  bat_cellvoltages[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  
 
-
-long rssi;
-
 // Wifi to percent
 const int RSSI_MAX =-50;  // max strength signal in dBm
 const int RSSI_MIN =-100; // min strength signal in dBm
+long rssi;
 
 //flag for saving data
 bool shouldSaveConfig = false;
+
 
 void saveConfigCallback () {
   DBG_PRINTLN("Should save config");
   shouldSaveConfig = true;
 }
 
+
 void notFound(AsyncWebServerRequest *request) {
     request->send(404, "text/plain", "Not found");
 }
 
+
 String processor(const String& var){ 
   return String();
 }
+
 
 int dBmtoPercent(int dBm){
   int percent;
@@ -164,11 +163,13 @@ int dBmtoPercent(int dBm){
   return percent;
 } 
 
+
 void onOTAStart() {
   // Log when OTA has started
   Serial.println("OTA update started!");
   // <Add your own code here>
 }
+
 
 void onOTAProgress(size_t current, size_t final) {
   // Log every 1 second
@@ -177,6 +178,7 @@ void onOTAProgress(size_t current, size_t final) {
     Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
   }
 }
+
 
 void onOTAEnd(bool success) {
   // Log when OTA has finished
@@ -187,6 +189,7 @@ void onOTAEnd(bool success) {
   }
   // <Add your own code here>
 }
+
 
 //read configuration from config.json
 void readConfig(){
@@ -308,6 +311,7 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     }
 }
 
+
 // wlan status
 const char *str_status[]= {
   "WL_IDLE_STATUS",
@@ -319,10 +323,11 @@ const char *str_status[]= {
   "WL_DISCONNECTED"
 };
 
+
 // WiFi mode
 const char *str_mode[]= { "WIFI_OFF", "WIFI_STA", "WIFI_AP", "WIFI_AP_STA" };
 
-// WiFi handling
+// WiFi
 void connectWifi() {
   DBG_PRINT("Connecting as wifi client to SSID: ");
   DBG_PRINTLN(ssid);
@@ -359,6 +364,7 @@ void connectWifi() {
   }
 } 
 
+
 void signalError() {  // RGBLED blinking in case of error
   while(1) {
       rgbled.setPixelColor(0, rgbled.Color(255, 0, 0)); // Red
@@ -374,7 +380,7 @@ void signalError() {  // RGBLED blinking in case of error
 
 void sendBmsRequest(char *msg) {
 
-  digitalWrite(DE_RE_PIN, RS485_TRANSMITT);
+    digitalWrite(DE_RE_PIN, RS485_TRANSMITT);
     delayMicroseconds(100);
     BMS_SERIAL.write(msg);
     BMS_SERIAL.flush();
@@ -384,25 +390,37 @@ void sendBmsRequest(char *msg) {
     DBG_PRINTLN("Send bms request");
 }
 
-// Funktion zur Berechnung der Pylontech-Checksumme
-uint16_t calculatePylontechChecksum(const char* data) {
+
+// Beispiel frame (Checksumme: E25F)
+// ~20024600B07E1102100D080D080D060D070D080D070D070D080D090D080D070D080D080D070D0A0D07050B650B380B380B380B3703C0D07AE34E04FFFF000900E34E0186A0E25F
+// Berechnung der Pylontech-Checksumme
+bool calculatePylontechChecksum(const char* data) {
     uint32_t sum = 0;
     size_t length = strlen(data);
+    char chksum_hexframe[5];
     
+    // Checksumme aus gesendeten frame extrahieren
+    memcpy(chksum_hexframe, data + (length - 5), 4);
+    chksum_hexframe[4] = '\0';    
+    uint16_t chksum_frame = strtol(chksum_hexframe, NULL, 16);
+   
+    // Checksumme neu berechnen (Ohne Startzeichen und der bereits enthaltene Checksumme)
     for (size_t i = 1; i < length - 5; i++) {
         sum += (uint8_t)data[i];
     }
-   
-    uint16_t checksum = (~sum + 1) & 0xFFFF;
+    uint16_t chksum_new = (~sum + 1) & 0xFFFF;
 
-    sprintf(dbgbuffer,"Checksumme: %04X\n", checksum);
-    DBG_PRINT(dbgbuffer);
-  
-    return checksum;
+
+    if(chksum_frame == chksum_new){
+      DBG_PRINTLN("Checksumme stimmt überein");
+      return true;
+    } else{
+      DBG_PRINTLN("Fehler Checksumme!");
+      return false;
+    }
 }
 
 
-// Hilfsfunktion: Wandelt x Hex-Zeichen ab einer bestimmten Position in eine Zahl um
 uint32_t parseHex(const char* str, int pos, int length) {
   uint32_t val = 0;
   for (int i = 0; i < length; i++) {
@@ -666,9 +684,6 @@ void setup() {
 
   DBG_PRINTLN("DBG 1");
 
-  //WiFi.mode(WIFI_STA);
-  //WiFi.macAddress(mac);
-  //WiFi.persistent(true);
 
   if(!LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED)) { 
      DBG_PRINT("LittleFS mount failed, ");
@@ -753,7 +768,6 @@ void setup() {
   events.onConnect([](AsyncEventSourceClient *client){
     if(client->lastId()){
       DBG_PRINTLN("");
-      //DEBUG_SERIAL.printf("Client reconnected! Last message ID that it got is: %u\n", client->lastId());
       sprintf(dbgbuffer,"Client reconnected! Last message ID that it got is: %u\n", client->lastId());
       DBG_PRINTLN(dbgbuffer);
     }
@@ -814,11 +828,10 @@ void setup() {
 	  jdoc["CELL16VOLTAGE"] = bat_cellvoltages[15];
 
     serializeJson(jdoc, message);
-
     request->send(200, "application/json", message);
-    
   });
 
+  // check checkboxes
   server.on("/checkbox", HTTP_GET, [] (AsyncWebServerRequest *request) {
       String checkbox_id;
       String checkbox_value;
@@ -839,7 +852,7 @@ void setup() {
       request->send_P(200, "text/html", index_html, processor);
     });
 
- // start AP Mode
+  // start AP Mode
   server.on("/apmode", HTTP_GET, [](AsyncWebServerRequest *request) {
     WiFiManager wifiManager;
     wifiManager.resetSettings();
@@ -927,8 +940,9 @@ void loop() {
         recording = false;
         // Nur parsen, wenn der Frame eine Mindestlänge hat
         if (rxIndex > 20) {
-          calculatePylontechChecksum(rxBuffer);
-          parsePylontechFrame(rxBuffer);
+          if(calculatePylontechChecksum(rxBuffer)){
+            parsePylontechFrame(rxBuffer);
+          }
         }
         rxIndex = 0;
       }
