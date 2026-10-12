@@ -1,6 +1,6 @@
 # wattcycle-bms-monitor
 
-Mit diesem Arduino-Projekt ist es möglich das BMS einer LiFePo4 WattCycle 48V 100A Rack-Batterie auslesen und, die Werte per MQTT an iobroker zu senden.
+Mit diesem Arduino-Projekt ist es möglich das BMS einer LiFePo4 WattCycle 48V 100A Rack-Batterie auslesen und, die Werte per MQTT an iobroker zu senden. Alternativ werden die Daten über das integriete WebIf angezeigt.
 
 
 > [!WARNING]
