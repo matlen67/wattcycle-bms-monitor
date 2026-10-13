@@ -16,6 +16,13 @@
   -----------------------------
 
   Requestframe WattCycle BMS RS485-Mode(PY/GosPow1) = "~20024642E00202FD33\r"
+
+  Achtung! Dieses Projekt verwendet die Lib ESPAsyncWebServer. Hier ist als Delimeter Trennzeichen das % Zeichen definiert.
+            Das macht Probleme beim darstellen der Webseite. Hierzu bitte das % Zeichen in der Datei
+            ArduinoIDE\libraries\ESP_Async_WebServer\src\WebResponseImpl.h ändern.
+            org:  #define TEMPLATE_PLACEHOLDER '%'
+            neu:  #define TEMPLATE_PLACEHOLDER '~'
+           
   
 ****************************************************************************/
 
