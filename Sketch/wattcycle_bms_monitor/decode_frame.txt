@@ -32,12 +32,12 @@ TSens 2		89	:	0B1A
 TSens 3		93	:	0B1B
 TSens 4		97	:	0B19
 TSens 5		101	:	0B18
-Strom		105	:	09BA	(  2840 mA = 2,84 A)
+Strom		105	:	09BA	( 2840 mA = 2,84 A)
 Spannung	109	:	D26E	(53870 mV = 53,87 V)
-Restkapa	113	:	24BC	(  9404 mAh, nur bei Batterien <=65 Ah sonst ab Index 127)
+Restkapa	113	:	24BC	( 9404 mAh, nur bei Batterien <=65 Ah sonst ab Index 127)
 User Def	117	:	04		Anwendungsindikator für erweitertes Datenlayout.
-Marker		119	:	FFFF	    Der Marker Signalisiert das die 2 Byte Grenze der Kapzität überschritten wurde, echte Restkapazität am Ende 3 Bytes 
+Marker		119	:	FFFF	Der Marker Signalisiert das die 2 Byte Grenze der Kapzität überschritten wurde, echte Restkapazität am Ende 3 Bytes 
 Zyklen		123	:	000A	(10 Zyklen)
-Restkapa	127	:	0124BC (74940 mAh = 74,94 Ah)
-Gesamtka	133	:	0186A0 ( 100000 mAh = 100Ah)
+Restkapa	127	:	0124BC	( 74940 mAh = 74,94 Ah)
+Gesamtka	133	:	0186A0	(100000 mAh = 100Ah)
 ChkSum		139	:	E21F
