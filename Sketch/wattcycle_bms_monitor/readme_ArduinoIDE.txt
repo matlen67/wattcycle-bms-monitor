@@ -1,9 +1,9 @@
 ESP32-S3 16R8 Einstellungen Arduino
 
 Flash Mode:         QIO 80Mhz
-Flash Size:				  16MB (128Mb)
+Flash Size:         16MB (128Mb)
 
-Partitionscheme:    custom
+Partitionscheme:    custom  (wegen OTA update)
 PSARAM:             OPI PSARAM
 
 
