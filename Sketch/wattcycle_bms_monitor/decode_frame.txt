@@ -1,0 +1,43 @@
+~20024600B07E1102100D270D250D260D260D260D250D250D290D270D270D280D270D270D250D2A0D25050B4D0B1A0B1B0B190B1809BAD26E24BC04FFFF000A0124BC0186A0E21F
+
+
+				Index	:	Bytes
+Start				00	:	~
+Version			01	:	20
+Address		03	:	02
+CID1				05	:	46		(46 = Lithium Batterie)
+CID2				07	:	00		(00 alles OK)
+Lenght			09	:	B07E	(B = Prüfsumme, Länge 07E = 126 Zeichen von Index 13 -139)
+Steuerbyte	13	:	1102
+Zellenzahl		17	:	10		(16 Zellen) 
+Zelle 01		19	:	0D27	(3367 mV = 3.367 V)
+					23	:	0D25
+					27	:	0D26
+					31	:	0D26
+					35	:	0D26
+					39	:	0D25
+					43	:	0D25
+					47	:	0D29
+					51	:	0D27
+					55	:	0D27
+					59	:	0D28
+					63	:	0D27
+					67	:	0D27
+					71	:	0D25
+					75	:	0D2A
+Zelle 16		79	:	0D25	(3365 mV = 3.365 V)
+Anz TSens	83	:	05
+TSens 1		85	:	0B4D	(2893 / 10 - 273,15 = 16,15 °C)
+TSens 2		89	:	0B1A
+TSens 3		93	:	0B1B
+TSens 4		97	:	0B19
+TSens 5		101	:	0B18
+Strom			105	:	09BA	(  2840 mA = 2,84 A)
+Spannung		109	:	D26E	(53870 mV = 53,87 V)
+Restkapa		113	:	24BC	(  9404 mAh, nur bei Batterien <=65 Ah sonst ab Index 127)
+User Def		117	:	04		Anwendungsindikator für erweitertes Datenlayout.
+Marker			119	:	FFFF	    Der Marker Signalisiert das die 2 Byte Grenze der Kapzität überschritten wurde, echte Restkapazität am Ende 3 Bytes 
+Zyklen			123	:	000A	(10 Zyklen)
+Restkapa		127	:	0124BC (74940 mAh = 74,94 Ah)
+Gesamtka		133	:	0186A0 ( 100000 mAh = 100Ah)
+ChkSum		139	:	E21F
