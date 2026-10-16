@@ -7,7 +7,7 @@ Version		01	:	20
 Address		03	:	02
 CID1		05	:	46		(46 = Lithium Batterie)
 CID2		07	:	00		(00 alles OK)
-Lenght		09	:	B07E	(B = Prüfsumme, Länge 07E = 126 Zeichen von Index 13 -139)
+Lenght		09	:	B07E	(B = Prüfsumme, Länge 07E = 126 Zeichen von Index 13 bis 139)
 Steuerbyte	13	:	1102
 Zellenzahl	17	:	10		(16 Zellen) 
 Zelle 01	19	:	0D27	(3367 mV = 3.367 V)
