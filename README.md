@@ -71,7 +71,8 @@ Hinweis: Das RS485 Entwicklungsboard verwendet einen MAX485 Pegelwandler der fü
 <img src="https://github.com/matlen67/wattcycle-bms-parser/blob/main/image/mqtt_iobroker.png" width="512">
 
 ### Bild 3: webif
-<img src="https://github.com/matlen67/wattcycle-bms-parser/blob/main/image/webif_20261016.png" width="512">
+<img src="https://github.com/matlen67/wattcycle-bms-parser/blob/main/image/webif1_20261022.png" width="512">
+<img src="https://github.com/matlen67/wattcycle-bms-parser/blob/main/image/webif2_20261022.png" width="512">
 
 ### Bild 4: telnet log
 <img src="https://github.com/matlen67/wattcycle-bms-parser/blob/main/image/telnet_log.png" width="512">
