@@ -1,1 +1,60 @@
-test
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+
+  <title>Wattcycle BMS Monitor Webflasher</title>
+
+  <script type="module"
+    src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module">
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #101827;
+      color: #ffffff;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 30px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    h1 { color: #38bdf8; }
+
+    esp-web-install-button {
+      --esp-tools-button-color: #0284c7;
+      --esp-tools-button-text-color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>Wattcycle BMS Monitor</h1>
+
+    <p>ESP32-S3 Firmware Webflasher</p>
+
+    <p>ESP32 per USB verbinden und
+       Firmware installieren.</p>
+
+    <esp-web-install-button
+      manifest="./manifest.json">
+      <span slot="unsupported">
+        Bitte Chrome oder Edge verwenden.
+      </span>
+    </esp-web-install-button>
+
+    <p>Projekt von matlen67</p>
+  </div>
+</body>
+</html>
