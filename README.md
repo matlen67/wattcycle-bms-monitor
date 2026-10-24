@@ -9,7 +9,7 @@ Mit diesem Arduino-Projekt ist es möglich das BMS einer LiFePo4 WattCycle 48V 1
 
 ## Firmware installieren
 Damit die Arduino-Ide nicht installieren werden muss, kann die Firmware zur Erstinstallation direkt mit einem Web-Flasher geschrieben werden. Nach der Erstinstallation können Updates per OTA eingespielt werden.
-Wichtig! Es werden alle Daten inklusive Wlanverbindungsdaten aus dem Speicher des ESP32 gelöscht. Nach der Erstinstallation einen Reset durchführen! Nachdem der ESP neu gestartet ist, wird ein Accesspoint mit mit der Kennung  ESP32_000000 aufgemacht. Hier kann man sich mit dem Smartphone verbinden um die Wlan- und MQTT-Broker-Verbindungsdaten einzutragen. Nach dem Speichern muss der ESP auch einmalig neu gestartet werden.
+Wichtig! Es werden alle Daten inklusive Wlanverbindungsdaten aus dem Speicher des ESP32 gelöscht. Nachdem der ESP neu gestartet ist, wird ein Accesspoint mit mit der Kennung  ESP32_000000 aufgemacht. Hier kann man sich mit dem Smartphone verbinden um die Wlan- und MQTT-Broker-Verbindungsdaten einzutragen. Nach dem Speichern muss der ESP neu gestartet werden.
 <br>
 <br>
 [https://matlen67.github.io/wattcycle-bms-monitor/esp32-webflasher](https://matlen67.github.io/wattcycle-bms-monitor/esp32-webflasher/)
