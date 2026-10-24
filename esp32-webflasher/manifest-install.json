@@ -1,0 +1,17 @@
+
+{
+  "name": "Wattcycle BMS Monitor - Erstinstallation",
+  "version": "1.0.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        {
+          "path": "firmware/wattcycle_bms_monitor-merged.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
