@@ -1,60 +1,26 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
-
-  <title>Wattcycle BMS Monitor Webflasher</title>
-
-  <script type="module"
-    src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module">
-  </script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #101827;
-      color: #ffffff;
-      text-align: center;
-      padding: 40px 20px;
-    }
-
-    .card {
-      background: #1e293b;
-      border-radius: 14px;
-      padding: 30px;
-      max-width: 500px;
-      margin: auto;
-    }
-
-    h1 { color: #38bdf8; }
-
-    esp-web-install-button {
-      --esp-tools-button-color: #0284c7;
-      --esp-tools-button-text-color: white;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<title>Wattcycle BMS Monitor – Webflasher</title>
+<script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+<style>
+:root{--bg-dark:#0f172a;--bg-card:#1e293b;--text-main:#f8fafc;--text-muted:#94a3b8;--accent-blue:#38bdf8;--color-success:#4ade80;--color-warning:#fbbf24;--border-color:#334155;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg-dark);color:var(--text-main)}.layout{display:flex;min-height:100vh}.sidebar{width:240px;flex-shrink:0;background:var(--bg-card);border-right:1px solid var(--border-color);padding:20px}.logo{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border-color);padding-bottom:20px;margin-bottom:22px;font-weight:700}.dot{height:12px;width:12px;border-radius:50%;background:var(--color-success);box-shadow:0 0 9px #4ade8060}.nav{display:block;padding:13px 14px;color:var(--text-muted);text-decoration:none;border-radius:8px;margin-bottom:8px}.nav:hover,.nav.active{background:var(--border-color);color:var(--text-main)}.nav.active{border-left:4px solid var(--accent-blue)}main{width:100%;max-width:1250px;padding:30px}.header{border-bottom:1px solid var(--border-color);padding-bottom:20px;margin-bottom:25px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}h1{font-size:1.5rem;margin:0}h2{font-size:1.12rem;margin:0 0 18px}p{line-height:1.65;color:var(--text-muted)}.eyebrow{font-size:.8rem;color:var(--accent-blue);font-weight:700;letter-spacing:.07em;text-transform:uppercase}.muted{color:var(--text-muted)}.grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(260px,1fr);gap:20px}.card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:10px;padding:26px;margin-bottom:20px}.tag{display:inline-block;border:1px solid #38bdf866;border-radius:5px;padding:5px 9px;color:var(--accent-blue);font-size:.78rem}.steps{padding-left:22px;line-height:1.9;color:var(--text-muted)}.steps strong{color:var(--text-main)}.notice{border-left:3px solid var(--color-warning);background:#fbbf240d;padding:13px 16px;border-radius:5px;color:#fcd77e;font-size:.9rem;line-height:1.6;margin:18px 0}.button-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:1px solid var(--accent-blue);color:var(--accent-blue);padding:12px 18px;border-radius:7px;font-weight:600;transition:.2s}.button-link:hover{background:var(--accent-blue);color:var(--bg-dark)}esp-web-install-button{--esp-tools-button-color:#38bdf8;--esp-tools-button-text-color:#0f172a;--esp-tools-button-border-radius:7px;display:block;margin:20px 0}esp-web-install-button::part(button){font-weight:700}footer{color:var(--text-muted);font-size:.8rem;padding:12px 0}a{color:var(--accent-blue)}.small{font-size:.85rem}@media(max-width:850px){.grid{grid-template-columns:1fr}.layout{display:block}.sidebar{width:100%;border-right:0;border-bottom:1px solid var(--border-color);padding:14px 20px}.logo{margin-bottom:10px;padding-bottom:12px}.nav{display:inline-block;margin:0 8px 0 0}main{padding:20px}.card{padding:20px}}
+</style>
 </head>
-
 <body>
-  <div class="card">
-    <h1>Wattcycle BMS Monitor</h1>
-
-    <p>ESP32-S3 Firmware Webflasher</p>
-
-    <p>ESP32 per USB verbinden und
-       Firmware installieren.</p>
-
-    <esp-web-install-button
-      manifest="./manifest.json">
-      <span slot="unsupported">
-        Bitte Chrome oder Edge verwenden.
-      </span>
-    </esp-web-install-button>
-
-    <p>Projekt von matlen67</p>
-  </div>
-</body>
-</html>
+<div class="layout">
+<aside class="sidebar"><div class="logo"><span class="dot"></span> Wattcycle BMS</div><a class="nav active" href="#install">⚡ Webflasher</a><a class="nav" href="#update">↻ OTA-Update</a><a class="nav" href="https://github.com/matlen67/wattcycle-bms-monitor" target="_blank" rel="noopener noreferrer">⌘ GitHub-Projekt ↗</a></aside>
+<main>
+<header class="header"><div><div class="eyebrow">Firmware Installation</div><h1>Wattcycle BMS Monitor</h1></div><span class="tag">ESP32-S3 · 16 MB Flash</span></header>
+<div class="grid">
+<section id="install" class="card"><h2>⚡ Erstinstallation über USB</h2><p>Installiere den Wattcycle BMS Monitor direkt über deinen Browser auf einem ESP32-S3. Es wird keine Arduino IDE benötigt.</p><div class="notice">Achtung: Eine Neuinstallation kann vorhandene Einstellungen und Daten auf dem ESP32 löschen. Verwende diese Funktion nur für die Erstinstallation oder eine bewusst gewünschte Neuinstallation.</div><esp-web-install-button manifest="./manifest.json"><span slot="unsupported">Dieser Browser unterstützt den Webflasher nicht. Bitte Chrome oder Edge auf einem Desktop-Computer verwenden.</span><span slot="not-allowed">Die serielle Schnittstelle ist hier nicht verfügbar. Bitte die Seite über HTTPS öffnen.</span></esp-web-install-button><p class="small">USB-Datenkabel erforderlich · Chrome oder Edge · Firmware für ESP32-S3</p></section>
+<section class="card"><h2>Installationsanleitung</h2><ol class="steps"><li><strong>ESP32-S3</strong> per USB-Datenkabel verbinden.</li><li>Auf <strong>Installieren</strong> klicken.</li><li>Den richtigen <strong>seriellen Anschluss</strong> auswählen.</li><li>Die Installation bestätigen und warten, bis sie abgeschlossen ist.</li><li>ESP32-S3 bei Bedarf neu starten.</li></ol><p class="small">Falls kein Anschluss erscheint: USB-Kabel und Treiber prüfen. Gegebenenfalls den ESP32-S3 in den Download-Modus versetzen.</p></section>
+</div>
+<section id="update" class="card"><h2>↻ Firmware-Update über ElegantOTA</h2><p>Du hast den Wattcycle BMS Monitor bereits installiert? Lade die Update-Firmware herunter und installiere sie über die ElegantOTA-Funktion im Webinterface deines ESP32. Ein USB-Webflasher ist für Updates nicht erforderlich.</p><a class="button-link" href="./ota-update/wattcycle_bms_monitor-update.bin" download>↓ OTA-Firmware herunterladen (.bin)</a><p class="small">Nur für das Update über ElegantOTA. Nicht als vollständige Erstinstallations-Firmware verwenden.</p></section>
+<footer>Wattcycle BMS Monitor · <a href="https://github.com/matlen67/wattcycle-bms-monitor">GitHub Repository</a></footer>
+</main></div>
+</body></html>
