@@ -27,7 +27,7 @@ Wichtig! Es werden alle Daten inklusive Wlanverbindungsdaten aus dem Speicher de
 
 ## Schaltung
 ### Bauteile
-- ESP32-S3 DevKitC-1
+- ESP32-S3 DevKitC-1 (Amazon: ESP32-S3 WROOM-1-N16R8 ESP32-S3-DevKitC-1 Entwicklungsboards)
 - RS485 Entwicklungsboard TTL zu RS485, MAX485 
 - RJ45 Stecker mit Kabel. RJ45 Pin 1 (white/orange) to RS485 B / RJ45 Pin 2 (orange) to RS485 A
   
