@@ -20,24 +20,16 @@ Wichtig! Es werden alle Daten inklusive Wlanverbindungsdaten aus dem Speicher de
 <br>
 
 
-
-
-
-
-
-## Schaltung (Nur nötig bei RS485 verbindung)
-### Bauteile
+## Hardware-Komponenten
 - ESP32-S3 DevKitC-1 (Amazon: ESP32-S3 WROOM-1-N16R8 ESP32-S3-DevKitC-1 Entwicklungsboards)
+#### zusätzliche Bauteile bei Verbindung über RS485
 - RS485 Entwicklungsboard TTL zu RS485, MAX485 
 - RJ45 Stecker mit Kabel. RJ45 Pin 1 (white/orange) to RS485 B / RJ45 Pin 2 (orange) to RS485 A
-  
-Das RS485 Entwicklungsboard und das Kabel mit RJ45-Stecker wird nur benötigt, wenn die Verbindung per RS485 aufgebaut werden soll
-<br>
 <br>
 Hinweis: Das RS485 Entwicklungsboard verwendet einen MAX485 Pegelwandler der für eine Versorgungsspannung von 5V ausgelegt ist. Da die GPIO's des ESP32 dauerhaft nur 3.3V vertragen wird die Spannung Vcc vom RS485 Entwicklungsboard am 3.3V Ausgang des ESP32 abgegriffen. Das RS485 Etwicklungsboard arbeitet auch zuverlässig mit 3.3V. Die 5V Spannungsversorgung des ESP32 kann entweder über USB oder den Anschlus-Pin VIN erfolgen.
 
 
-### Bild 1: Schaltung
+### Bild 1: Schaltung (RS485)
 <img src="https://github.com/matlen67/wattcycle-bms-parser/blob/main/image/schaltplan.png" width="512">
 
 ### Bild 2: mqtt iobroker
